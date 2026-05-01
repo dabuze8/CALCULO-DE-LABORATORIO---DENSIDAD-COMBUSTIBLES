@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Calidad de Gasolinas · UMSA PET-212</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#161b22; --bg3:#21262d; --bg4:#30363d;
+  --border:#30363d; --border2:#484f58;
+  --text:#e6edf3; --text2:#8b949e; --text3:#6e7681;
+  --teal:#3fb950; --teal-bg:rgba(63,185,80,.12); --teal-border:rgba(63,185,80,.3);
+  --blue:#58a6ff; --blue-bg:rgba(88,166,255,.12); --blue-border:rgba(88,166,255,.3);
+  --amber:#f0883e; --amber-bg:rgba(240,136,62,.12); --amber-border:rgba(240,136,62,.3);
+  --red:#f85149; --red-bg:rgba(248,81,73,.12); --red-border:rgba(248,81,73,.3);
+  --purple:#a371f7; --purple-bg:rgba(163,113,247,.12); --purple-border:rgba(163,113,247,.3);
+  --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans',sans-serif;
+  --r:6px; --r2:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* ── HEADER ── */
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100}
+.header-badge{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue);padding:4px 12px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:500;white-space:nowrap}
+.header h1{font-size:15px;font-weight:600;color:var(--text)}
+.header p{font-size:12px;color:var(--text2);margin-top:1px}
+.header-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.gh-link{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:var(--r);font-size:12px;font-family:var(--mono);text-decoration:none;transition:.2s}
+.gh-link:hover{border-color:var(--border2);color:var(--text)}
+
+/* ── LAYOUT ── */
+.container{max-width:1200px;margin:0 auto;padding:24px 32px}
+
+/* ── NAV PILLS ── */
+.nav-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2)}
+.pill{background:none;border:1px solid var(--border);color:var(--text2);padding:5px 14px;border-radius:20px;font-size:12px;font-family:var(--mono);cursor:pointer;transition:.15s}
+.pill:hover{border-color:var(--border2);color:var(--text)}
+.pill.active{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+
+/* ── SECTION ── */
+.section{margin-bottom:32px;scroll-margin-top:80px}
+.section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;font-family:var(--mono);flex-shrink:0}
+.section-title{font-size:14px;font-weight:600;color:var(--text)}
+.section-sub{font-size:11px;color:var(--text3);font-family:var(--mono)}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;margin-bottom:12px}
+.card-title{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:12px;font-family:var(--mono)}
+.card-sub{font-size:11px;color:var(--text2);margin-bottom:10px}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:700px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+
+/* ── INPUTS ── */
+.inp-g{display:flex;flex-direction:column;gap:4px}
+.inp-g label{font-size:11px;color:var(--text2);font-family:var(--mono)}
+.inp-g input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:var(--r);font-family:var(--mono);font-size:12px;width:100%;transition:.15s}
+.inp-g input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(88,166,255,.12)}
+.inp-g .hint{font-size:10px;color:var(--text3)}
+
+/* ── METRIC CARDS ── */
+.mc{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.mc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px;font-family:var(--mono)}
+.mc-val{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--blue)}
+.mc-sub{font-size:10px;color:var(--text3);margin-top:3px}
+.mc-ok .mc-val{color:var(--teal)}
+.mc-warn .mc-val{color:var(--amber)}
+.mc-err .mc-val{color:var(--red)}
+.mc-purple .mc-val{color:var(--purple)}
+
+/* ── FORMULA ── */
+.formula{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:10px 16px;font-family:var(--mono);font-size:12px;color:var(--text);text-align:center;margin-bottom:10px;letter-spacing:.02em}
+.formula span{color:var(--blue)}
+
+/* ── BADGES ── */
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.b-ok{background:var(--teal-bg);border:1px solid var(--teal-border);color:var(--teal)}
+.b-warn{background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)}
+.b-info{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)}
+.b-err{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red)}
+
+/* ── PRESET BUTTONS ── */
+.preset-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.pbtn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:5px 14px;border-radius:20px;font-size:12px;font-family:var(--mono);cursor:pointer;transition:.15s}
+.pbtn:hover{border-color:var(--border2);color:var(--text)}
+.pbtn.act{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse;font-size:12px}
+table.dt th{background:var(--bg3);color:var(--text2);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);font-family:var(--mono)}
+table.dt td{padding:7px 12px;border-bottom:1px solid var(--border);text-align:center;font-family:var(--mono);color:var(--text)}
+table.dt td.lbl{text-align:left;font-family:var(--sans);color:var(--text2)}
+table.dt tr:last-child td{border-bottom:none}
+table.dt tr.even td{background:rgba(255,255,255,.02)}
+
+/* ── SEP ── */
+.sep{border:none;border-top:1px solid var(--border);margin:14px 0}
+
+/* ── VALUE RESULT LINE ── */
+.vr{font-family:var(--mono);font-size:12px;text-align:center;color:var(--text2);padding:8px;background:var(--bg3);border-radius:var(--r);margin-top:6px}
+.vr span{color:var(--blue);font-weight:600}
+
+/* ── ROW 3M ── */
+.r3m{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+
+/* ── CHART WRAP ── */
+.cw{position:relative;width:100%}
+
+/* ── LEGEND ── */
+.leg{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.leg-i{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.leg-sq{display:inline-block;width:20px;height:3px;border-radius:2px}
+.leg-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+
+/* ── STAT GROUP TITLE ── */
+.sg-title{font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:500;border-left:2px solid var(--blue);padding-left:8px}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:20px 32px;text-align:center;color:var(--text3);font-size:11px;font-family:var(--mono);margin-top:32px}
+footer a{color:var(--blue);text-decoration:none}
+
+/* ── SECTION DIVIDER ── */
+.sdiv{height:1px;background:var(--border);margin:8px 0 24px}
+
+/* ── SLIDER ROW ── */
+.sl-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--text2)}
+.sl-row input[type=range]{flex:1;min-width:100px;accent-color:var(--blue)}
+.sl-row span{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);min-width:36px}
+.sl-row input[type=checkbox]{accent-color:var(--blue);cursor:pointer;width:14px;height:14px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-badge">PET-212</div>
+  <div>
+    <h1>Dashboard · Parámetros de Calidad de Gasolinas</h1>
+    <p>UMSA · Ingeniería Petrolera · Refinación del Petróleo · Norma GOST 3900 / ASTM D1217</p>
+  </div>
+  <div class="header-right">
+    <a class="gh-link" href="https://github.com" target="_blank">GitHub ↗</a>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- NAV -->
+<nav class="nav-pills">
+  <button class="pill active" onclick="scrollTo('s1')">1 · Muestras</button>
+  <button class="pill" onclick="scrollTo('s2')">2 · Estadística</button>
+  <button class="pill" onclick="scrollTo('s3')">3 · Densidad</button>
+  <button class="pill" onclick="scrollTo('s4')">4 · Corrección T</button>
+  <button class="pill" onclick="scrollTo('s5')">5 · PIE</button>
+  <button class="pill" onclick="scrollTo('s6')">6 · RON</button>
+  <button class="pill" onclick="scrollTo('s7')">7 · Resumen</button>
+  <button class="pill" onclick="scrollTo('s8')">8 · Gráf. RON</button>
+  <button class="pill" onclick="scrollTo('s9')">9 · Gráf. Densidad</button>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 1 — TOMA DE MUESTRAS
+═════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)">1</div>
+    <div>
+      <div class="section-title">Toma de muestras y registro de masas</div>
+      <div class="section-sub">3 réplicas por muestra · nivel de confianza 95% · t₀.₀₅ = 4.303</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cargar muestra predefinida</div>
+    <div class="preset-btns">
+      <button class="pbtn act" onclick="loadPreset('GB81',this)">GB81 pura</button>
+      <button class="pbtn" onclick="loadPreset('GB85',this)">GB85 pura</button>
+      <button class="pbtn" onclick="loadPreset('GE',this)">GE estación</button>
+      <button class="pbtn" onclick="loadPreset('FOR',this)">Formulada E8</button>
+      <button class="pbtn" onclick="loadPreset('ETOH',this)">Etanol anhidro</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Identificación de la muestra</div>
+    <div class="g3" style="margin-bottom:14px">
+      <div class="inp-g">
+        <label>Nombre de la muestra</label>
+        <input id="nom" value="Gasolina Base 81" oninput="calc()">
+      </div>
+      <div class="inp-g">
+        <label>% EtOH volumétrico</label>
+        <input id="xet" type="number" step="0.5" value="0" oninput="calc()">
+        <div class="hint">0 = pura · 8 = E8 · 12 = E12</div>
+      </div>
+      <div class="inp-g">
+        <label>RON base conocido</label>
+        <input id="ron_base" type="number" step="1" value="81" oninput="calc()">
+        <div class="hint">81 o 85 según D.S. 4718</div>
+      </div>
+    </div>
+    <hr class="sep">
+    <div class="card-title">Masas del picnómetro — 3 réplicas (g)</div>
+    <div class="g3" style="margin-bottom:14px">
+      <div>
+        <div class="sg-title">Picnómetro vacío</div>
+        <div class="inp-g"><label>Réplica 1</label><input id="pv1" type="number" step="0.001" value="13.840" oninput="calc()"></div>
+        <div class="inp-g" style="margin-top:6px"><label>Réplica 2</label><input id="pv2" type="number" step="0.001" value="13.850" oninput="calc()"></div>
+        <div class="inp-g" style="margin-top:6px"><label>Réplica 3</label><input id="pv3" type="number" step="0.001" value="13.840" oninput="calc()"></div>
+      </div>
+      <div>
+        <div class="sg-title">Picnómetro + agua destilada</div>
+        <div class="inp-g"><label>Réplica 1</label><input id="pa1" type="number" step="0.001" value="24.550" oninput="calc()"></div>
+        <div class="inp-g" style="margin-top:6px"><label>Réplica 2</label><input id="pa2" type="number" step="0.001" value="24.550" oninput="calc()"></div>
+        <div class="inp-g" style="margin-top:6px"><label>Réplica 3</label><input id="pa3" type="number" step="0.001" value="24.550" oninput="calc()"></div>
+      </div>
+      <div>
+        <div class="sg-title">Picnómetro + muestra</div>
+        <div class="inp-g"><label>Réplica 1</label><input id="pm1" type="number" step="0.001" value="21.400" oninput="calc()"></div>
+        <div class="inp-g" style="margin-top:6px"><label>Réplica 2</label><input id="pm2" type="number" step="0.001" value="21.400" oninput="calc()"></div>
+        <div class="inp-g" style="margin-top:6px"><label>Réplica 3</label><input id="pm3" type="number" step="0.001" value="21.410" oninput="calc()"></div>
+      </div>
+    </div>
+    <hr class="sep">
+    <div class="card-title">Condiciones de laboratorio</div>
+    <div class="g2">
+      <div class="inp-g">
+        <label>T muestra al momento de pesada (°C)</label>
+        <input id="temp" type="number" step="0.1" value="22.3" oninput="calc()">
+        <div class="hint">registrar del termómetro junto al picnómetro</div>
+      </div>
+      <div class="inp-g">
+        <label>Presión atmosférica local (mmHg)</label>
+        <input id="pres" type="number" step="1" value="640" oninput="calc()">
+        <div class="hint">La Paz ≈ 640 · nivel del mar = 760</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 2 — ESTADÍSTICA
+═════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--teal-bg);border:1px solid var(--teal-border);color:var(--teal)">2</div>
+    <div>
+      <div class="section-title">Estadística — media, desviación estándar y valor verdadero</div>
+      <div class="section-sub">m̄ = Σmᵢ/n · σ = √[Σ(mᵢ−m̄)²/(n−1)] · ε = t·σ/√n con t₀.₀₅/₂ = 4.303</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="g3">
+      <div>
+        <div class="sg-title">Picnómetro vacío</div>
+        <div class="r3m">
+          <div class="mc"><div class="mc-lbl">Media</div><div class="mc-val" id="s_pv_m">—</div><div class="mc-sub">g</div></div>
+          <div class="mc"><div class="mc-lbl">σ</div><div class="mc-val" id="s_pv_s">—</div></div>
+          <div class="mc"><div class="mc-lbl">±ε 95%</div><div class="mc-val" id="s_pv_e">—</div></div>
+        </div>
+        <div class="vr" id="vv_pv">—</div>
+      </div>
+      <div>
+        <div class="sg-title">Picnómetro + agua</div>
+        <div class="r3m">
+          <div class="mc"><div class="mc-lbl">Media</div><div class="mc-val" id="s_pa_m">—</div><div class="mc-sub">g</div></div>
+          <div class="mc"><div class="mc-lbl">σ</div><div class="mc-val" id="s_pa_s">—</div></div>
+          <div class="mc"><div class="mc-lbl">±ε 95%</div><div class="mc-val" id="s_pa_e">—</div></div>
+        </div>
+        <div class="vr" id="vv_pa">—</div>
+      </div>
+      <div>
+        <div class="sg-title">Picnómetro + muestra</div>
+        <div class="r3m">
+          <div class="mc"><div class="mc-lbl">Media</div><div class="mc-val" id="s_pm_m">—</div><div class="mc-sub">g</div></div>
+          <div class="mc"><div class="mc-lbl">σ</div><div class="mc-val" id="s_pm_s">—</div></div>
+          <div class="mc"><div class="mc-lbl">±ε 95%</div><div class="mc-val" id="s_pm_e">—</div></div>
+        </div>
+        <div class="vr" id="vv_pm">—</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 3 — DENSIDAD GOST
+═════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)">3</div>
+    <div>
+      <div class="section-title">Cálculo de densidad — Fórmula GOST con corrección por flotabilidad</div>
+      <div class="section-sub">Norma GOST 3900 · corrección C desde tabla rusa de modificaciones en peso en el aire</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="formula">ρ<span>_s</span> = [(m<span>_s+p</span> − m<span>_pv</span>) / (m<span>_a+p</span> − m<span>_pv</span>)] · ρ<span>_agua</span> + C</div>
+    <div class="g4">
+      <div class="mc"><div class="mc-lbl">Ratio (m_s−m_pv)/(m_a−m_pv)</div><div class="mc-val" id="r_ratio">—</div></div>
+      <div class="mc"><div class="mc-lbl">C flotabilidad (g/mL)</div><div class="mc-val" id="r_C">—</div><div class="mc-sub">tabla GOST 3900</div></div>
+      <div class="mc mc-ok"><div class="mc-lbl">ρ_s calculada (g/mL)</div><div class="mc-val" id="r_rhos">—</div></div>
+      <div class="mc"><div class="mc-lbl">Error propagado Eρ</div><div class="mc-val" id="r_erho">—</div><div class="mc-sub">g/mL</div></div>
+    </div>
+    <div class="vr" style="margin-top:10px">Valor verdadero: <span id="r_vv_rho">—</span></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 4 — CORRECCIÓN TEMPERATURA
+═════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)">4</div>
+    <div>
+      <div class="section-title">Corrección por temperatura — Factor γ (GOST) + Clausius-Clapeyron</div>
+      <div class="section-sub">ρ₂₀ = ρ_t + γ · (t − 20) · γ depende del rango de densidad medida</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="formula">ρ<span>₂₀</span> = ρ<span>_t</span> + γ · (t − 20)</div>
+    <div class="g4">
+      <div class="mc"><div class="mc-lbl">Factor γ (g/mL·°C)</div><div class="mc-val" id="r_gamma">—</div><div class="mc-sub">tabla GOST</div></div>
+      <div class="mc"><div class="mc-lbl">ΔT = t − 20 (°C)</div><div class="mc-val" id="r_dt">—</div></div>
+      <div class="mc mc-ok"><div class="mc-lbl">ρ₂₀ corregida (g/mL)</div><div class="mc-val" id="r_rho20">—</div></div>
+      <div class="mc mc-purple"><div class="mc-lbl">ρ₁₅ La Paz (g/mL)</div><div class="mc-val" id="r_rho15">—</div></div>
+    </div>
+    <hr class="sep">
+    <div class="g4">
+      <div class="mc mc-ok"><div class="mc-lbl">Gravedad específica G.E.</div><div class="mc-val" id="r_ge">—</div><div class="mc-sub">adimensional</div></div>
+      <div class="mc mc-purple"><div class="mc-lbl">Gravedad °API</div><div class="mc-val" id="r_api">—</div><div class="mc-sub">141.5/GE − 131.5</div></div>
+      <div class="mc"><div class="mc-lbl">D.S. 4718 G.E.</div><div class="mc-val" id="r_ge_ds" style="font-size:13px">—</div><div class="mc-sub">0.720 – 0.775</div></div>
+      <div class="mc"><div class="mc-lbl">Corrección γ·ΔT</div><div class="mc-val" id="r_corr">—</div><div class="mc-sub">g/mL</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 5 — PIE
+═════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)">5</div>
+    <div>
+      <div class="section-title">Temperatura de ebullición — Punto Inicial de Ebullición (PIE / IBP)</div>
+      <div class="section-sub">Riazi (1986) + Clausius-Clapeyron + azeótropo EtOH-hidrocarburo</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="formula">PIE = min( T<span>_Riazi_LP</span> , T<span>_azeótropo_LP</span> , T<span>_EtOH_LP</span> )</div>
+    <div class="g3">
+      <div class="mc"><div class="mc-lbl">Tb Riazi a 760 mmHg (°C)</div><div class="mc-val" id="r_tb760">—</div><div class="mc-sub">fracción más liviana est.</div></div>
+      <div class="mc mc-ok"><div class="mc-lbl">Tb Riazi La Paz (°C)</div><div class="mc-val" id="r_tbLP">—</div><div class="mc-sub">Clausius-Clapeyron P local</div></div>
+      <div class="mc mc-warn"><div class="mc-lbl">T azeótropo EtOH-HC LP (°C)</div><div class="mc-val" id="r_taz">—</div><div class="mc-sub">mínimo de ebullición</div></div>
+    </div>
+    <div class="g2" style="margin-top:10px">
+      <div class="mc" style="background:rgba(240,136,62,.08);border-color:var(--amber-border)">
+        <div class="mc-lbl">PIE final — La Paz (°C)</div>
+        <div class="mc-val" id="r_pie" style="font-size:24px;color:var(--amber)">—</div>
+        <div class="mc-sub">primer punto de ebullición local</div>
+      </div>
+      <div class="mc">
+        <div class="mc-lbl">Verificación D.S. 4718 (PIE ≥ 35°C)</div>
+        <div style="margin-top:8px" id="r_pie_ds">—</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 6 — RON
+═════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--teal-bg);border:1px solid var(--teal-border);color:var(--teal)">6</div>
+    <div>
+      <div class="section-title">RON estimado — Regla de mezclas volumétrica</div>
+      <div class="section-sub">RON_mez = x_EtOH · 108.6 + (1 − x_EtOH) · RON_base · error ±1–2 RON</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="formula">RON<span>_mez</span> = x<span>_EtOH</span> · 108.6 + (1 − x<span>_EtOH</span>) · RON<span>_base</span></div>
+    <div class="g4">
+      <div class="mc"><div class="mc-lbl">x_EtOH desde densidades</div><div class="mc-val" id="r_xet">—</div></div>
+      <div class="mc"><div class="mc-lbl">% EtOH real calculado</div><div class="mc-val" id="r_pctohreal">—</div></div>
+      <div class="mc" style="background:rgba(63,185,80,.08);border-color:var(--teal-border)">
+        <div class="mc-lbl">RON estimado</div>
+        <div class="mc-val" id="r_ron" style="font-size:24px;color:var(--teal)">—</div>
+      </div>
+      <div class="mc">
+        <div class="mc-lbl">D.S. 4718 (RON ≥ 87)</div>
+        <div style="margin-top:8px" id="r_ron_ds">—</div>
+      </div>
+    </div>
+    <div class="vr" style="margin-top:10px">
+      % EtOH mín. para RON 87: con <strong>GB81</strong> → <span id="xmin81">—</span> · con <strong>GB85</strong> → <span id="xmin85">—</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 7 — RESUMEN
+═════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text)">7</div>
+    <div>
+      <div class="section-title">Resumen de resultados — verificación D.S. 4718</div>
+      <div class="section-sub">todos los parámetros calculados con sus límites normativos</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th style="text-align:left">Parámetro</th>
+            <th>Valor calculado</th>
+            <th>Unidad</th>
+            <th>Límite D.S. 4718</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="res_tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 8 — GRÁFICA RON
+═════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)">8</div>
+    <div>
+      <div class="section-title">Gráfica RON vs % EtOH</div>
+      <div class="section-sub">curvas GB81 y GB85 · datos del ensayo · límite mínimo D.S. 4718 = 87 RON</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="leg">
+      <span class="leg-i"><span class="leg-sq" style="background:#3fb950"></span>GB81 + EtOH</span>
+      <span class="leg-i"><span class="leg-sq" style="background:#58a6ff"></span>GB85 + EtOH</span>
+      <span class="leg-i"><span class="leg-sq" style="border-top:2px dashed #f85149;height:0;background:none"></span>Mín. D.S.4718 (87)</span>
+      <span class="leg-i"><span class="leg-dot" style="background:#f0883e"></span>Muestra actual</span>
+    </div>
+    <div class="cw" style="height:280px">
+      <canvas id="chartRON" role="img" aria-label="RON estimado vs porcentaje de etanol para GB81 y GB85, con límite D.S.4718 en 87 RON.">RON vs % EtOH.</canvas>
+    </div>
+    <div class="tbl-wrap" style="margin-top:14px">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th>% EtOH</th><th>x vol.</th>
+            <th>RON GB81+EtOH</th><th>RON GB85+EtOH</th>
+            <th>D.S.4718 (GB81)</th><th>D.S.4718 (GB85)</th>
+          </tr>
+        </thead>
+        <tbody id="ron_tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECCIÓN 9 — GRÁFICA DENSIDAD
+═════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-hdr">
+    <div class="section-num" style="background:var(--purple-bg);border:1px solid var(--purple-border);color:var(--purple)">9</div>
+    <div>
+      <div class="section-title">Gráfica Densidad vs % EtOH</div>
+      <div class="section-sub">curvas teóricas (regla mezclas) · datos experimentales · banda D.S. 4718 (0.720–0.775 g/mL)</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="leg">
+      <span class="leg-i"><span class="leg-sq" style="background:#3fb950"></span>GB81 + EtOH (calc.)</span>
+      <span class="leg-i"><span class="leg-sq" style="background:#58a6ff"></span>GB85 + EtOH (calc.)</span>
+      <span class="leg-i"><span class="leg-sq" style="border-top:2px dashed #f85149;height:0;background:none"></span>Lím. sup. 0.775</span>
+      <span class="leg-i"><span class="leg-sq" style="border-top:2px dashed #f0883e;height:0;background:none"></span>Lím. inf. 0.720</span>
+      <span class="leg-i"><span class="leg-dot" style="background:#3fb950;border:2px solid #085041"></span>Datos GB81</span>
+      <span class="leg-i"><span class="leg-dot" style="background:#58a6ff;border:2px solid #0C447C"></span>Datos GB85</span>
+      <span class="leg-i"><span class="leg-dot" style="background:#f0883e;border:2px solid #712B13"></span>Muestra actual</span>
+    </div>
+    <div class="sl-row">
+      <label>Rango % EtOH:</label>
+      <input type="range" id="sl_max" min="5" max="30" step="1" value="20" oninput="document.getElementById('sl_out').textContent=this.value+'%';updateDens()">
+      <span id="sl_out">20%</span>
+      <label style="margin-left:12px">Banda D.S.4718:</label>
+      <input type="checkbox" id="show_band" checked onchange="updateDens()">
+    </div>
+    <div class="cw" style="height:300px">
+      <canvas id="chartDens" role="img" aria-label="Densidad a 20°C versus porcentaje de etanol para mezclas GB81 y GB85, con banda de límites D.S.4718 entre 0.720 y 0.775 g/mL.">Densidad vs % EtOH.</canvas>
+    </div>
+    <div class="tbl-wrap" style="margin-top:14px">
+      <table class="dt">
+        <thead>
+          <tr>
+            <th>% EtOH</th><th>x vol.</th>
+            <th>ρ GB81+EtOH (g/mL)</th><th>ρ GB85+EtOH (g/mL)</th>
+            <th>D.S.4718 GB81</th><th>D.S.4718 GB85</th>
+          </tr>
+        </thead>
+        <tbody id="dens_tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  Dashboard de Laboratorio · Parámetros de Calidad de Gasolinas y Mezclas con Etanol ·
+  UMSA Ingeniería Petrolera · Refinación del Petróleo PET-212 ·
+  Norma GOST 3900 / ASTM D1217 / D.S. 4718 Bolivia ·
+  <a href="https://github.com" target="_blank">GitHub Pages</a>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════
+   CONSTANTES Y PRESETS
+══════════════════════════════════════════ */
+const T_ALPHA = 4.303;
+const RHO_AGUA = 0.9970;
+const RON_ETOH = 108.6;
+const GE_ETOH = 0.786;
+const GE_GB81 = 0.7040;
+const GE_GB85 = 0.7450;
+const DS_MIN = 0.720, DS_MAX = 0.775;
+
+const PRESETS = {
+  GB81:{ nom:'Gasolina Base 81',  xet:0,   ron:81, pv:[13.840,13.850,13.840], pa:[24.550,24.550,24.550], pm:[21.400,21.400,21.410], T:22.3 },
+  GB85:{ nom:'Gasolina Base 85',  xet:0,   ron:85, pv:[13.840,13.850,13.840], pa:[24.550,24.550,24.550], pm:[21.580,21.580,21.590], T:20.5 },
+  GE:  { nom:'GE Estación serv.', xet:8,   ron:87, pv:[13.840,13.850,13.840], pa:[24.550,24.550,24.550], pm:[21.530,21.530,21.520], T:22.6 },
+  FOR: { nom:'Formulada E8 GB81', xet:8,   ron:81, pv:[13.840,13.850,13.840], pa:[24.550,24.550,24.550], pm:[21.510,21.500,21.510], T:22.9 },
+  ETOH:{ nom:'Etanol anhidro',    xet:100, ron:0,  pv:[13.840,13.850,13.840], pa:[24.550,24.550,24.550], pm:[22.270,22.280,22.270], T:22.1 },
+};
+
+/* ══ UTILIDADES ══ */
+function scrollTo(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+
+function loadPreset(k,btn){
+  const p=PRESETS[k];
+  document.getElementById('nom').value=p.nom;
+  document.getElementById('xet').value=p.xet;
+  document.getElementById('ron_base').value=p.ron;
+  ['pv1','pv2','pv3'].forEach((id,i)=>document.getElementById(id).value=p.pv[i].toFixed(3));
+  ['pa1','pa2','pa3'].forEach((id,i)=>document.getElementById(id).value=p.pa[i].toFixed(3));
+  ['pm1','pm2','pm3'].forEach((id,i)=>document.getElementById(id).value=p.pm[i].toFixed(3));
+  document.getElementById('temp').value=p.T.toFixed(1);
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  calc();
+}
+
+function stats(arr){
+  const n=arr.length, m=arr.reduce((a,b)=>a+b,0)/n;
+  const s=Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/(n-1));
+  return{m,s,eps:T_ALPHA*s/Math.sqrt(n)};
+}
+
+function getC(r){
+  const tbl=[[0.60,.48],[0.61,.47],[0.62,.46],[0.63,.44],[0.64,.43],[0.65,.42],[0.66,.41],[0.67,.40],[0.68,.38],[0.69,.37],[0.70,.36],[0.71,.35],[0.72,.34],[0.73,.32],[0.74,.31],[0.75,.30],[0.76,.29],[0.77,.28],[0.78,.26],[0.79,.25],[0.80,.24],[0.81,.23],[0.82,.22],[0.83,.20],[0.84,.19],[0.85,.18],[0.86,.17],[0.87,.16],[0.88,.14],[0.89,.13],[0.90,.12]];
+  const r2=Math.round(r*100)/100;
+  for(const[x,c]of tbl)if(Math.abs(x-r2)<0.005)return c/1000;
+  return r<0.60?0.00048:0.00012;
+}
+
+function getGamma(rho){
+  if(rho<0.700)return 0.000897; if(rho<0.710)return 0.000884;
+  if(rho<0.720)return 0.000870; if(rho<0.730)return 0.000857;
+  if(rho<0.740)return 0.000844; if(rho<0.750)return 0.000831;
+  if(rho<0.760)return 0.000817; if(rho<0.800)return 0.000780;
+  return 0.000765;
+}
+
+function cc(Tb,dhv,P){
+  const TbK=Tb+273.15, lnPP=Math.log(P/760);
+  return TbK/(1-(8.314e-3*TbK/dhv)*lnPP)-273.15;
+}
+
+function rhoMix(rb,x){ return x*GE_ETOH+(1-x)*rb; }
+
+function bOk(ok,y,n){ return ok?`<span class="badge b-ok">${y}</span>`:`<span class="badge b-warn">${n}</span>`; }
+
+/* ══ CHARTS ══ */
+let ronChart=null, densChart=null;
+let CUR_GE=GE_GB81, CUR_XET=0, CUR_RON_BASE=81;
+
+const GC='rgba(255,255,255,0.06)', TC='#8b949e';
+
+function makeRONChart(){
+  const pf=Array.from({length:201},(_,i)=>i*0.1);
+  ronChart=new Chart(document.getElementById('chartRON'),{
+    type:'line',
+    data:{labels:pf,datasets:[
+      {label:'GB81+EtOH',data:pf.map(p=>({x:p,y:p/100*RON_ETOH+(1-p/100)*81})),borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.06)',fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,parsing:false},
+      {label:'GB85+EtOH',data:pf.map(p=>({x:p,y:p/100*RON_ETOH+(1-p/100)*85})),borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.06)',fill:true,tension:0.3,borderWidth:2.5,pointRadius:0,parsing:false},
+      {label:'Mín.87',data:pf.map(p=>({x:p,y:87})),borderColor:'#f85149',borderDash:[6,4],borderWidth:1.8,pointRadius:0,fill:false,parsing:false},
+      {label:'Muestra',data:[{x:CUR_XET,y:CUR_XET/100*RON_ETOH+(1-CUR_XET/100)*CUR_RON_BASE}],borderColor:'#712B13',backgroundColor:'#f0883e',showLine:false,pointRadius:9,pointStyle:'triangle',parsing:false},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:150},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:c=>'% EtOH = '+parseFloat(c[0].label).toFixed(1)+'%',label:c=>c.dataset.label+': '+c.parsed.y.toFixed(2)+' RON'}}},
+      scales:{
+        x:{type:'linear',min:0,max:20,title:{display:true,text:'% EtOH volumétrico',color:TC,font:{size:12}},ticks:{color:TC,font:{size:11},callback:v=>v+'%'},grid:{color:GC}},
+        y:{min:78,max:112,title:{display:true,text:'RON estimado',color:TC,font:{size:12}},ticks:{color:TC,font:{size:11}},grid:{color:GC}}
+      }
+    }
+  });
+}
+
+function makeDensChart(){
+  const pf=Array.from({length:201},(_,i)=>i*0.1);
+  densChart=new Chart(document.getElementById('chartDens'),{
+    type:'line',
+    data:{labels:pf,datasets:[
+      {label:'GB81+EtOH calc.',data:pf.map(p=>({x:p,y:rhoMix(GE_GB81,p/100)})),borderColor:'#3fb950',backgroundColor:'rgba(63,185,80,0.06)',fill:false,tension:0.3,borderWidth:2.5,pointRadius:0,parsing:false},
+      {label:'GB85+EtOH calc.',data:pf.map(p=>({x:p,y:rhoMix(GE_GB85,p/100)})),borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.06)',fill:false,tension:0.3,borderWidth:2.5,pointRadius:0,parsing:false},
+      {label:'Datos GB81',data:[{x:0,y:0.704},{x:8,y:0.714}],borderColor:'#085041',backgroundColor:'#3fb950',showLine:false,pointRadius:7,pointStyle:'circle',parsing:false},
+      {label:'Datos GB85',data:[{x:0,y:0.745},{x:8,y:0.716}],borderColor:'#0C447C',backgroundColor:'#58a6ff',showLine:false,pointRadius:7,pointStyle:'rectRot',parsing:false},
+      {label:'Muestra actual',data:[{x:CUR_XET,y:CUR_GE}],borderColor:'#712B13',backgroundColor:'#f0883e',showLine:false,pointRadius:9,pointStyle:'triangle',parsing:false},
+      {label:'Lím.sup.0.775',data:pf.map(p=>({x:p,y:DS_MAX})),borderColor:'#f85149',borderDash:[6,4],borderWidth:1.8,pointRadius:0,fill:false,parsing:false},
+      {label:'Lím.inf.0.720',data:pf.map(p=>({x:p,y:DS_MIN})),borderColor:'#f0883e',borderDash:[6,4],borderWidth:1.8,pointRadius:0,fill:false,parsing:false},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:150},
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{title:c=>'% EtOH = '+parseFloat(c[0].label).toFixed(1)+'%',label:c=>c.dataset.label.startsWith('Lím')?null:c.dataset.label+': '+c.parsed.y.toFixed(4)+' g/mL'}}},
+      scales:{
+        x:{type:'linear',min:0,max:20,title:{display:true,text:'% EtOH volumétrico',color:TC,font:{size:12}},ticks:{color:TC,font:{size:11},callback:v=>v+'%'},grid:{color:GC}},
+        y:{min:0.690,max:0.800,title:{display:true,text:'Densidad a 20°C (g/mL)',color:TC,font:{size:12}},ticks:{color:TC,font:{size:11},callback:v=>v.toFixed(3)},grid:{color:GC}}
+      }
+    }
+  });
+}
+
+function updateDens(){
+  if(!densChart) return;
+  const maxP=+document.getElementById('sl_max').value||20;
+  const show=document.getElementById('show_band').checked;
+  const pf=Array.from({length:maxP*10+1},(_,i)=>i*0.1);
+  densChart.data.datasets[0].data=pf.map(p=>({x:p,y:rhoMix(GE_GB81,p/100)}));
+  densChart.data.datasets[1].data=pf.map(p=>({x:p,y:rhoMix(GE_GB85,p/100)}));
+  densChart.data.datasets[4].data=[{x:CUR_XET,y:CUR_GE}];
+  densChart.data.datasets[5].data=show?pf.map(p=>({x:p,y:DS_MAX})):[];
+  densChart.data.datasets[6].data=show?pf.map(p=>({x:p,y:DS_MIN})):[];
+  densChart.options.scales.x.max=maxP;
+  densChart.update('none');
+
+  // tabla densidad
+  const tbody=document.getElementById('dens_tbody');
+  tbody.innerHTML='';
+  [0,2,4,6,8,10,12,15,18,20].filter(p=>p<=maxP).forEach((p,i)=>{
+    const x=p/100, r81=rhoMix(GE_GB81,x), r85=rhoMix(GE_GB85,x);
+    const ok81=r81>=DS_MIN&&r81<=DS_MAX, ok85=r85>=DS_MIN&&r85<=DS_MAX;
+    const tr=document.createElement('tr');
+    if(i%2)tr.className='even';
+    tr.innerHTML=`<td style="font-weight:600">${p}%</td><td>${x.toFixed(2)}</td><td style="color:${ok81?'#3fb950':'#f0883e'};font-weight:${ok81?600:400}">${r81.toFixed(4)}</td><td style="color:${ok85?'#3fb950':'#f0883e'};font-weight:${ok85?600:400}">${r85.toFixed(4)}</td><td>${bOk(ok81,'cumple','fuera')}</td><td>${bOk(ok85,'cumple','fuera')}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══ CÁLCULO PRINCIPAL ══ */
+function calc(){
+  const pv=[+document.getElementById('pv1').value,+document.getElementById('pv2').value,+document.getElementById('pv3').value];
+  const pa=[+document.getElementById('pa1').value,+document.getElementById('pa2').value,+document.getElementById('pa3').value];
+  const pm=[+document.getElementById('pm1').value,+document.getElementById('pm2').value,+document.getElementById('pm3').value];
+  const T=+document.getElementById('temp').value;
+  const P=+document.getElementById('pres').value||640;
+  const xet_pct=+document.getElementById('xet').value||0;
+  const ron_base=+document.getElementById('ron_base').value||81;
+  if([...pv,...pa,...pm].some(isNaN)||isNaN(T)) return;
+
+  const fmt=(v,d=3)=>v.toFixed(d);
+  const fmte=v=>v<0.001?v.toExponential(3):v.toFixed(5);
+
+  /* ── ESTADÍSTICAS ── */
+  const spv=stats(pv), spa=stats(pa), spm=stats(pm);
+  document.getElementById('s_pv_m').textContent=fmt(spv.m);
+  document.getElementById('s_pv_s').textContent=fmte(spv.s);
+  document.getElementById('s_pv_e').textContent=fmt(spv.eps,4);
+  document.getElementById('vv_pv').innerHTML=`m_pv = (<span>${fmt(spv.m)}</span> ± <span>${fmt(spv.eps,2)}</span>) g`;
+  document.getElementById('s_pa_m').textContent=fmt(spa.m);
+  document.getElementById('s_pa_s').textContent=fmte(spa.s);
+  document.getElementById('s_pa_e').textContent=fmt(spa.eps,4);
+  document.getElementById('vv_pa').innerHTML=`m_a+p = (<span>${fmt(spa.m)}</span> ± <span>${fmt(spa.eps,2)}</span>) g`;
+  document.getElementById('s_pm_m').textContent=fmt(spm.m);
+  document.getElementById('s_pm_s').textContent=fmte(spm.s);
+  document.getElementById('s_pm_e').textContent=fmt(spm.eps,4);
+  document.getElementById('vv_pm').innerHTML=`m_s+p = (<span>${fmt(spm.m)}</span> ± <span>${fmt(spm.eps,2)}</span>) g`;
+
+  /* ── DENSIDAD GOST ── */
+  const mpv=spv.m, map_=spa.m, mpm=spm.m;
+  const num=mpm-mpv, den=map_-mpv;
+  const ratio=num/den;
+  const C=getC(ratio);
+  const rhos=ratio*RHO_AGUA+C;
+  const Erho=Math.abs(RHO_AGUA*((spm.eps+spv.eps)*den-(mpm-mpv)*(spa.eps+spv.eps))/(den*den));
+  document.getElementById('r_ratio').textContent=ratio.toFixed(4);
+  document.getElementById('r_C').textContent=C.toFixed(6)+' g/mL';
+  document.getElementById('r_rhos').textContent=rhos.toFixed(4)+' g/mL';
+  document.getElementById('r_erho').textContent='± '+Erho.toFixed(6);
+  document.getElementById('r_vv_rho').innerHTML=`ρ_s = (<span>${rhos.toFixed(4)}</span> ± <span>${Erho.toFixed(4)}</span>) g/mL`;
+
+  /* ── CORRECCIÓN TEMPERATURA ── */
+  const gamma=getGamma(rhos), dt=T-20;
+  const rho20=rhos+gamma*dt, rho15=rhos+gamma*(T-15);
+  const ge=rho20, api=(141.5/ge)-131.5;
+  document.getElementById('r_gamma').textContent=gamma.toFixed(6);
+  document.getElementById('r_dt').textContent=(dt>=0?'+':'')+dt.toFixed(1)+' °C';
+  document.getElementById('r_rho20').textContent=rho20.toFixed(4)+' g/mL';
+  document.getElementById('r_rho15').textContent=rho15.toFixed(4)+' g/mL';
+  document.getElementById('r_ge').textContent=ge.toFixed(4);
+  document.getElementById('r_api').textContent=api.toFixed(2)+' °API';
+  document.getElementById('r_corr').textContent=(gamma*dt>=0?'+':'')+(gamma*dt).toFixed(5)+' g/mL';
+  document.getElementById('r_ge_ds').innerHTML=bOk(ge>=DS_MIN&&ge<=DS_MAX,'cumple','fuera');
+
+  /* ── PIE ── */
+  const ge_light=Math.max(0.60,ge-0.08);
+  const tb760=748.1*ge_light-311.9;
+  const tbLP=cc(tb760,35,P);
+  const x_et=xet_pct/100;
+  const taz760=x_et>0?(65.0-3.5*(1-x_et)+1.2*x_et*x_et):null;
+  const tazLP=taz760!==null?cc(taz760,36.5,P):null;
+  const tetLP=cc(78.4,38.6,P);
+  const cands=[tbLP];
+  if(tazLP!==null) cands.push(tazLP);
+  if(x_et>0) cands.push(tetLP);
+  const pie=Math.min(...cands);
+  document.getElementById('r_tb760').textContent=tb760.toFixed(1)+' °C';
+  document.getElementById('r_tbLP').textContent=tbLP.toFixed(1)+' °C';
+  document.getElementById('r_taz').textContent=tazLP!==null?tazLP.toFixed(1)+' °C':'N/A (sin EtOH)';
+  document.getElementById('r_pie').textContent=pie.toFixed(1)+' °C';
+  document.getElementById('r_pie_ds').innerHTML=bOk(pie>=35,'cumple ≥ 35°C','revisar < 35°C');
+
+  /* ── RON ── */
+  const x_calc=Math.max(0,Math.min(1,(ge-GE_GB81)/(GE_ETOH-GE_GB81)));
+  const ron=x_et*RON_ETOH+(1-x_et)*ron_base;
+  const xmin81=((87-81)/(RON_ETOH-81)*100).toFixed(1)+'%';
+  const xmin85=((87-85)/(RON_ETOH-85)*100).toFixed(1)+'%';
+  document.getElementById('r_xet').textContent=x_calc.toFixed(4);
+  document.getElementById('r_pctohreal').textContent=(x_calc*100).toFixed(1)+'%';
+  document.getElementById('r_ron').textContent=ron.toFixed(2);
+  document.getElementById('r_ron_ds').innerHTML=bOk(ron>=87,'cumple ≥ 87 RON','no alcanza 87 RON');
+  document.getElementById('xmin81').innerHTML=`<span style="color:#58a6ff;font-family:var(--mono)">${xmin81}</span>`;
+  document.getElementById('xmin85').innerHTML=`<span style="color:#3fb950;font-family:var(--mono)">${xmin85}</span>`;
+
+  /* ── TABLA RESUMEN ── */
+  const rows=[
+    ['ρ_t medida', rhos.toFixed(4),'g/mL','0.720 – 0.775',ge>=DS_MIN&&ge<=DS_MAX],
+    ['G.E. a 20°C', ge.toFixed(4),'—','0.720 – 0.775',ge>=DS_MIN&&ge<=DS_MAX],
+    ['Gravedad °API', api.toFixed(2),'°API','55 – 75',api>=55&&api<=75],
+    ['Error propagado Eρ','±'+Erho.toFixed(5),'g/mL','< 0.002',Erho<0.002],
+    ['Corrección γ·ΔT',(gamma*dt>=0?'+':'')+(gamma*dt).toFixed(5),'g/mL','referencia',true],
+    ['ρ corregida 20°C', rho20.toFixed(4),'g/mL','0.720 – 0.775',rho20>=DS_MIN&&rho20<=DS_MAX],
+    ['ρ corregida 15°C (LP)', rho15.toFixed(4),'g/mL','referencia La Paz',true],
+    ['PIE — La Paz', pie.toFixed(1),'°C','≥ 35',pie>=35],
+    ['RON estimado', ron.toFixed(2),'—','≥ 87',ron>=87],
+  ];
+  const tbody=document.getElementById('res_tbody');
+  tbody.innerHTML='';
+  rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    if(i%2) tr.className='even';
+    tr.innerHTML=`<td class="lbl">${r[0]}</td><td style="font-weight:600;color:${r[4]?'#3fb950':'#f0883e'}">${r[1]}</td><td style="color:#6e7681">${r[2]}</td><td style="color:#6e7681">${r[3]}</td><td>${bOk(r[4],'cumple','revisar')}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  /* ── TABLA RON ── */
+  const ronTbody=document.getElementById('ron_tbody');
+  ronTbody.innerHTML='';
+  [0,2,4,6,8,10,12,15,18,20].forEach((p,i)=>{
+    const x=p/100;
+    const r81=x*RON_ETOH+(1-x)*81, r85=x*RON_ETOH+(1-x)*85;
+    const tr=document.createElement('tr');
+    if(i%2) tr.className='even';
+    tr.innerHTML=`<td style="font-weight:600">${p}%</td><td>${x.toFixed(2)}</td><td style="color:${r81>=87?'#3fb950':'#f0883e'};font-weight:${r81>=87?600:400}">${r81.toFixed(2)}</td><td style="color:${r85>=87?'#3fb950':'#f0883e'};font-weight:${r85>=87?600:400}">${r85.toFixed(2)}</td><td>${bOk(r81>=87,'cumple','no cumple')}</td><td>${bOk(r85>=87,'cumple','no cumple')}</td>`;
+    ronTbody.appendChild(tr);
+  });
+
+  /* ── ACTUALIZAR CHARTS ── */
+  CUR_GE=ge; CUR_XET=xet_pct; CUR_RON_BASE=ron_base;
+
+  if(ronChart){
+    ronChart.data.datasets[0].data=Array.from({length:201},(_,i)=>({x:i*0.1,y:i*0.1/100*RON_ETOH+(1-i*0.1/100)*ron_base}));
+    ronChart.data.datasets[2].data=Array.from({length:201},(_,i)=>({x:i*0.1,y:ron_base}));
+    ronChart.data.datasets[3].data=[{x:xet_pct,y:ron}];
+    ronChart.options.scales.y.min=Math.max(75,ron_base-5);
+    ronChart.update('none');
+  }
+
+  if(densChart){
+    densChart.data.datasets[4].data=[{x:xet_pct,y:ge}];
+    densChart.update('none');
+  }
+
+  updateDens();
+}
+
+/* ══ NAV PILL ACTIVE STATE ══ */
+document.querySelectorAll('.pill').forEach(p=>{
+  p.addEventListener('click',()=>{
+    document.querySelectorAll('.pill').forEach(q=>q.classList.remove('active'));
+    p.classList.add('active');
+  });
+});
+
+/* ══ INIT ══ */
+window.addEventListener('load',()=>{
+  makeRONChart();
+  makeDensChart();
+  calc();
+});
+</script>
+</body>
+</html>
